@@ -1,0 +1,177 @@
+<html>
+    <style>
+        body
+        {
+            background-color: antiquewhite
+        }
+        img 
+        {
+            width: 100px    
+        }
+        table
+        {
+            text-align: center
+        }
+        tbody tr
+        {
+            background-color: aliceblue
+            
+        }
+        td
+        {
+            border: solid 2px black
+        }
+        .danger
+        {
+            background-color: red
+        }
+    </style>
+  <body>
+    <h1 class="info">Loading Table</h1>
+    <table id="fullTable">
+        <thead>
+            <th id="imageCol">Image</th>
+            <th id="quizCol">Quiz Grade(Average)</th>
+            <th id="hwCol">Homework Grade (Average)</th>
+            <th id="testsCol">Test Grade (Average)</th>
+            <th id="finalCol">Final Exam Grade</th>
+            <th id="gradeCol">Weighted Final Grade</th>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+  </body>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        var getMean = function(array){
+            return d3.mean(array.map(function(student) {return student.grade;})).toFixed(2);
+        };
+        var calculateGrade = function(student){
+            var quizes = .2 * getMean(student.quizes)/student.quizes[0].max;
+            var hw = .15 *getMean(student.homework)/student.homework[0].max;
+            var test = .3 * getMean(student.test)/student.test[0].max;
+            var final = .35 * student.final[0].grade/student.final[0].max;
+            var total = 100 * (quizes + hw + test + final).toFixed(2);
+            return total;
+            
+        };
+        var drawTable = function(students){
+            console.log(students);
+            var rows = d3.select("#fullTable tbody")
+                        .selectAll("tr")
+                        .data(students)
+                        .enter()
+                        .append("tr")
+                        .attr("class", function(student){
+                            if(calculateGrade(student) < 70)
+                            {
+                                return "danger";    
+                            }
+                            else{return "fine";}
+                        });
+            rows.append("td")
+                .append("img")
+                .attr("src", function(student) {return "imgs/" + student.picture;});
+            rows.append("td")
+                .text(function(student){return getMean(student.quizes);});
+            rows.append("td")
+                .text(function(student){return getMean(student.homework);});
+            rows.append("td")
+                .text(function(student){return getMean(student.test);});
+            rows.append("td")
+                .text(function(student){return student.final[0].grade;});
+            rows.append("td")
+                .text(function(student){return calculateGrade(student) + "%";});
+                
+        };
+        var clearTable = function(){ d3.selectAll("#fullTable tbody tr").remove();};
+        var classPromise = d3.json("classData.json");
+        classPromise.then(function(students){
+            d3.select(".info").text("Load Successful")
+            drawTable(students);
+            d3.select("#quizCol")
+                .on("click", function(){ 
+                var sorted = students.sort(function(student1, student2){
+                    if(getMean(student1.quizes) == getMean(student2.quizes)){
+                        return 0;
+                    }
+                    else if(getMean(student1.quizes) > getMean(student2.quizes)){
+                        return 1;        
+                    }
+                    else{
+                        return -1;        
+                    }
+                });
+                clearTable();
+                drawTable(sorted);
+            });
+            d3.select("#hwCol")
+                .on("click", function(){ 
+                var sorted = students.sort(function(student1, student2){
+                    if(getMean(student1.homework) == getMean(student2.homework)){
+                        return 0;
+                    }
+                    else if(getMean(student1.homework) > getMean(student2.homework)){
+                        return 1;        
+                    }
+                    else{
+                        return -1;        
+                    }
+                });
+                clearTable();
+                drawTable(sorted);
+            });
+            d3.select("#testsCol")
+                .on("click", function(){ 
+                var sorted = students.sort(function(student1, student2){
+                    if(getMean(student1.test) == getMean(student2.test)){
+                        return 0;
+                    }
+                    else if(getMean(student1.test) > getMean(student2.test)){
+                        return 1;        
+                    }
+                    else{
+                        return -1;        
+                    }
+                });
+                clearTable();
+                drawTable(sorted);
+            });
+            d3.select("#finalCol")
+                .on("click", function(){ 
+                var sorted = students.sort(function(student1, student2){
+                    if(student1.final[0].grade == student2.final[0].grade){
+                        return 0;
+                    }
+                    else if(student1.final[0].grade > student2.final[0].grade){
+                        return 1;        
+                    }
+                    else{
+                        return -1;        
+                    }
+                });
+                clearTable();
+                drawTable(sorted);
+            });
+            d3.select("#gradeCol")
+                .on("click", function(){ 
+                var sorted = students.sort(function(student1, student2){
+                    grade1 = calculateGrade(student1);
+                    grade2 = calculateGrade(student2);
+                    if(grade1 == grade2){
+                        return 0;
+                    }
+                    else if(grade1 > grade2){
+                        return 1;        
+                    }
+                    else{
+                        return -1;        
+                    }
+                });
+                clearTable();
+                drawTable(sorted);
+            });
+        }, function(err){d3.select(".info").text("Load Failed"); console.log(err);
+        });
+    </script>
+</html>
